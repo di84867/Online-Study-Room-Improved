@@ -1,2 +1,29 @@
-# node modules
-/node_modules
+# dependencies
+node_modules/
+frontend/node_modules/
+
+# production
+dist/
+frontend/dist/
+build/
+
+# environment variables
+.env
+.env.local
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# system files
+.DS_Store
+Thumbs.db
+
+# assets/uploads
+assets/uploads/*
+!assets/uploads/.gitkeep
+
+# agent
+.agent/

@@ -1,0 +1,257 @@
+.schedule-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.schedule-content {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.meetings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.meeting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem !important;
+}
+
+.meeting-main {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.time-badge {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    padding: 10px 15px;
+    border-radius: 12px;
+    text-align: center;
+    min-width: 90px;
+}
+
+.time-badge .label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+}
+
+.time-badge .value {
+    display: block;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--secondary);
+}
+
+.meeting-info h4 {
+    margin: 0 0 5px 0;
+    font-size: 1.1rem;
+}
+
+.meeting-info .meta {
+    display: flex;
+    gap: 15px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.meeting-info .meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.join-btn {
+    padding: 10px 24px !important;
+}
+
+.empty-state,
+.loading-state {
+    padding: 4rem !important;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    color: var(--text-muted);
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.schedule-modal {
+    width: 100%;
+    max-width: 450px;
+    padding: 2.5rem !important;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 12px;
+    color: white;
+    outline: none;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.date-display {
+    padding: 12px;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    color: var(--primary);
+    font-weight: 600;
+    text-align: center;
+}
+
+.availability-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.stat {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 1.5rem;
+    border-radius: 16px;
+    text-align: center;
+    border: 1px solid var(--glass-border);
+}
+
+.stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+@media (max-width: 900px) {
+    .schedule-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Custom Calendar Styling */
+.custom-calendar {
+    width: 100% !important;
+    background: transparent !important;
+    border: none !important;
+    font-family: inherit !important;
+    color: white !important;
+}
+
+.react-calendar__navigation button {
+    color: white !important;
+    min-width: 44px;
+    background: none;
+    font-size: 1.1rem;
+    margin-top: 8px;
+}
+
+.react-calendar__navigation button:enabled:hover,
+.react-calendar__navigation button:enabled:focus {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 8px;
+}
+
+.react-calendar__month-view__weekdays {
+    color: var(--text-muted) !important;
+    font-weight: 600 !important;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.react-calendar__tile {
+    padding: 12px 6.6667px !important;
+    border-radius: 12px !important;
+    transition: all 0.2s ease;
+    color: white !important;
+}
+
+.react-calendar__tile:enabled:hover,
+.react-calendar__tile:enabled:focus {
+    background-color: var(--primary) !important;
+    color: white !important;
+}
+
+.react-calendar__tile--now {
+    background: rgba(99, 102, 241, 0.1) !important;
+    color: var(--primary) !important;
+}
+
+.react-calendar__tile--active {
+    background: var(--primary) !important;
+    color: white !important;
+}
+
+.react-calendar__month-view__days__day--neighboringMonth {
+    color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.react-calendar__month-view__days__day--weekend {
+    color: var(--secondary) !important;
+}
