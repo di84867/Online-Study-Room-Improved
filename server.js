@@ -1,32 +1,52 @@
-const path = require("path");
 const express = require("express");
+const app = express();
+const path = require("path");
+const socketio = require("socket.io");
 const http = require("http");
 const moment = require("moment");
-const socketio = require("socket.io");
-const PORT = process.env.PORT || 3000;
-const {writeFile}  = require('fs')
-const app = express();
-const server = http.createServer(app);
+const mongoose = require("mongoose");
+const cors = require("cors");
+const PORT = process.env.PORT || 5050;
+const { writeFile, mkdirSync, existsSync } = require('fs')
 
-const io = socketio(server, {maxHttpBufferSize: 1e7});
+// Ensure uploads directory exists
+if (!existsSync('./assets/uploads')) {
+  mkdirSync('./assets/uploads', { recursive: true });
+}
+
+// Database Connection
+mongoose.connect('mongodb://localhost:27017/online-study-room', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => console.log('MongoDB Connected'))
+  .catch(err => console.log(err));
+
+app.use(cors());
+app.use(express.json());
+
+const server = http.createServer(app);
+const io = socketio(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  },
+  maxHttpBufferSize: 1e7
+});
 
 const initRoutes = require("./src/routes");
 
 initRoutes(app);
 
 app.use(express.static(path.join(__dirname, "public")));
+app.use('/files', express.static(path.join(__dirname, "assets/uploads")));
 
-let rooms = {};
 let socketroom = {};
 let socketname = {};
-let micSocket = {};
-let videoSocket = {};
-let roomBoard = {};
+let roomAdmins = {}; // { roomid: [socketIds] }
 
 io.on("connect", (socket) => {
   socket.on("upload", (file, fileName, callback) => {
     try {
-      // save the content to the disk, for example
       writeFile(`./assets/uploads/${fileName}`, file, (err) => {
         callback({ message: err ? "failure" : "success" });
       });
@@ -35,58 +55,93 @@ io.on("connect", (socket) => {
     }
   });
 
-  socket.on("join room", (roomid, username) => {
+  socket.on('join room', (roomid, name, isAdmin) => {
     socket.join(roomid);
     socketroom[socket.id] = roomid;
-    socketname[socket.id] = username;
-    micSocket[socket.id] = "on";
-    videoSocket[socket.id] = "on";
+    socketname[socket.id] = name;
+    console.log(`User ${name} (${socket.id}) joined room ${roomid}`);
 
-    if (rooms[roomid] && rooms[roomid].length > 0) {
-      rooms[roomid].push(socket.id);
-      socket
-        .to(roomid)
-        .emit(
-          "message",
-          `${username} joined the room.`,
-          "Bot",
-          moment().format("h:mm a")
-        );
-      io.to(socket.id).emit(
-        "join room",
-        rooms[roomid].filter((pid) => pid != socket.id),
-        socketname,
-        micSocket,
-        videoSocket
-      );
-    } else {
-      rooms[roomid] = [socket.id];
-      io.to(socket.id).emit("join room", null, null, null, null);
+    if (isAdmin) {
+      if (!roomAdmins[roomid]) roomAdmins[roomid] = [];
+      if (!roomAdmins[roomid].includes(socket.id)) {
+        roomAdmins[roomid].push(socket.id);
+      }
     }
 
-    io.to(roomid).emit("user count", rooms[roomid].length);
+    // Notify others
+    socket.to(roomid).emit('join room', [socket.id], { [socket.id]: name }, {}, {}, isAdmin);
+
+    // Send list of users already in room back to joiner
+    const clients = io.sockets.adapter.rooms.get(roomid);
+    const usersInRoom = clients ? Array.from(clients).filter(id => id !== socket.id) : [];
+    const names = {};
+    usersInRoom.forEach(id => names[id] = socketname[id]);
+
+    socket.emit('join room', usersInRoom, names, {}, {}, isAdmin);
   });
 
-  socket.on("action", (msg) => {
-    if (msg == "mute") micSocket[socket.id] = "off";
-    else if (msg == "unmute") micSocket[socket.id] = "on";
-    else if (msg == "videoon") videoSocket[socket.id] = "on";
-    else if (msg == "videooff") videoSocket[socket.id] = "off";
-
-    socket.to(socketroom[socket.id]).emit("action", msg, socket.id);
+  socket.on("message", (msg, roomid, href) => {
+    const senderName = socketname[socket.id] || "Guest";
+    // If it's a file from a non-admin, it shouldn't be here directly (handled by file-request)
+    io.to(roomid).emit("message", msg, senderName, moment().format("h:mm a"), href, socket.id);
   });
 
-  socket.on("video-offer", (offer, sid) => {
-    socket
-      .to(sid)
-      .emit(
-        "video-offer",
-        offer,
-        socket.id,
-        socketname[socket.id],
-        micSocket[socket.id],
-        videoSocket[socket.id]
-      );
+  // Admin File Permission Logic
+  socket.on("file-request", (fileName, displayName, href) => {
+    const roomid = socketroom[socket.id];
+    // Send request to room admins
+    if (roomAdmins[roomid]) {
+      roomAdmins[roomid].forEach(adminSid => {
+        io.to(adminSid).emit("file-permission-request", {
+          senderId: socket.id,
+          senderName: socketname[socket.id],
+          fileName,
+          href
+        });
+      });
+    }
+  });
+
+  socket.on("approve-file", (requestId, fileName, href) => {
+    const roomid = socketroom[socket.id];
+    const senderName = socketname[requestId] || "Guest";
+    // Broadcast to everyone now that admin approved
+    io.to(roomid).emit("message", fileName, senderName, moment().format("h:mm a"), href, requestId);
+  });
+
+  // Admin Controls
+  socket.on("delete-message", (msgIndex) => {
+    const roomid = socketroom[socket.id];
+    io.to(roomid).emit("message-deleted", msgIndex);
+  });
+
+  socket.on("kick-user", (targetSid) => {
+    const roomid = socketroom[socket.id];
+    // Verify kicker is admin
+    if (roomAdmins[roomid] && roomAdmins[roomid].includes(socket.id)) {
+      io.to(targetSid).emit("kicked");
+    }
+  });
+
+  socket.on("private message", (msg, targetSid) => {
+    const senderName = socketname[socket.id] || "Guest";
+    const roomid = socketroom[socket.id];
+    const time = moment().format("h:mm a");
+    const senderId = socket.id;
+
+    io.to(targetSid).emit("private message", msg, senderName, time, senderId, targetSid);
+
+    if (roomAdmins[roomid]) {
+      roomAdmins[roomid].forEach(adminSid => {
+        if (adminSid !== senderId && adminSid !== targetSid) {
+          io.to(adminSid).emit("private message", `[Private ${senderName}->${socketname[targetSid]}]: ${msg}`, senderName, time, senderId, targetSid, true);
+        }
+      });
+    }
+  });
+
+  socket.on("video-offer", (offer, sid, name) => {
+    socket.to(sid).emit("video-offer", offer, socket.id, name);
   });
 
   socket.on("video-answer", (answer, sid) => {
@@ -97,54 +152,26 @@ io.on("connect", (socket) => {
     socket.to(sid).emit("new icecandidate", candidate, socket.id);
   });
 
-  socket.on("message", (msg, username, roomid, href) => {
-    io.to(roomid).emit("message", msg, username, moment().format("h:mm a"), href);
+  socket.on("speaking", (speaking) => {
+    const roomid = socketroom[socket.id];
+    if (roomid) socket.to(roomid).emit("speaking", socket.id, speaking);
   });
 
-  socket.on("getCanvas", () => {
-    if (roomBoard[socketroom[socket.id]])
-      socket.emit("getCanvas", roomBoard[socketroom[socket.id]]);
-  });
-
-  socket.on("draw", (newx, newy, prevx, prevy, color, size) => {
-    socket
-      .to(socketroom[socket.id])
-      .emit("draw", newx, newy, prevx, prevy, color, size);
-  });
-
-  socket.on("clearBoard", () => {
-    socket.to(socketroom[socket.id]).emit("clearBoard");
-  });
-
-  socket.on("store canvas", (url) => {
-    roomBoard[socketroom[socket.id]] = url;
+  socket.on("action", (type, roomid, extra) => {
+    socket.to(roomid).emit("action", type, socket.id, extra);
   });
 
   socket.on("disconnect", () => {
-    if (!socketroom[socket.id]) return;
-    socket
-      .to(socketroom[socket.id])
-      .emit(
-        "message",
-        `${socketname[socket.id]} left the chat.`,
-        `Bot`,
-        moment().format("h:mm a")
-      );
-    socket.to(socketroom[socket.id]).emit("remove peer", socket.id);
-    var index = rooms[socketroom[socket.id]].indexOf(socket.id);
-    rooms[socketroom[socket.id]].splice(index, 1);
-    io.to(socketroom[socket.id]).emit(
-      "user count",
-      rooms[socketroom[socket.id]].length
-    );
+    const roomid = socketroom[socket.id];
+    if (roomid && roomAdmins[roomid]) {
+      roomAdmins[roomid] = roomAdmins[roomid].filter(id => id !== socket.id);
+    }
+    socket.to(roomid).emit("remove peer", socket.id);
     delete socketroom[socket.id];
-    console.log("--------------------");
-    console.log(rooms[socketroom[socket.id]]);
+    delete socketname[socket.id];
   });
 });
 
-server.listen(PORT, () =>
-  console.log(`Server is up and running on port ${PORT} 
-i.e http://localhost:${PORT}
-`)
-);
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
