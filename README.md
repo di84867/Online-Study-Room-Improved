@@ -3,6 +3,7 @@
 A real-time video conferencing and collaboration platform for online study sessions.
 
 ## Features
+
 <<<<<<< HEAD
 
 - **Video Conferencing** - WebRTC-powered real-time video calls
@@ -60,11 +61,11 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed hosting instructions.
 
 ## License
 
-MIT
-=======
+# MIT
+
 - **Modern React GUI**: Stunning glassmorphic design with Framer Motion animations.
 - **Instant Meetings**: Start a local meeting immediately and invite others.
 - **Calendar Scheduling**: Plan and track upcoming study sessions.
 - **Real-time Chat**: Integrated chat within the meeting rooms.
 - **Social Auth**: Support for Google and Facebook login.
->>>>>>> 222a8e93b0d3dfad59d8c2a96c624d46a7236aed
+  > > > > > > > 222a8e93b0d3dfad59d8c2a96c624d46a7236aed
