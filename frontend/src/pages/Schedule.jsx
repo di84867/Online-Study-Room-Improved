@@ -43,7 +43,7 @@ const Schedule = ({ user }) => {
             return;
         }
 
-        const roomId = Math.random().toString(36).substring(2, 9);
+        const roomId = 'OSR' + Math.floor(1000 + Math.random() * 9000);
         const meetingData = {
             title,
             date: date.toISOString(),
@@ -112,35 +112,52 @@ const Schedule = ({ user }) => {
                                 <p>Loading meetings...</p>
                             </div>
                         ) : filteredMeetings.length > 0 ? (
-                            filteredMeetings.map((meeting) => (
-                                <motion.div
-                                    key={meeting._id}
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    whileHover={{ scale: 1.01 }}
-                                    className="glass-card meeting-item"
-                                >
-                                    <div className="meeting-main">
-                                        <div className="time-badge">
-                                            <span className="label">TIME</span>
-                                            <span className="value">{meeting.time}</span>
-                                        </div>
-                                        <div className="meeting-info">
-                                            <h4>{meeting.title}</h4>
-                                            <div className="meta">
-                                                <span><Clock size={14} /> {meeting.duration} min</span>
-                                                <span><Video size={14} /> ID: {meeting.roomId}</span>
+                            filteredMeetings.map((meeting) => {
+                                const isCreator = user && user._id === meeting.creator;
+                                return (
+                                    <motion.div
+                                        key={meeting._id}
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        whileHover={{ scale: 1.01 }}
+                                        className="glass-card meeting-item"
+                                        style={{ borderLeft: isCreator ? '4px solid var(--primary)' : '4px solid #dadce0' }}
+                                    >
+                                        <div className="meeting-main">
+                                            <div className="time-badge">
+                                                <span className="label">TIME</span>
+                                                <span className="value">{meeting.time}</span>
+                                            </div>
+                                            <div className="meeting-info">
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <h4>{meeting.title}</h4>
+                                                    {isCreator && (
+                                                        <span style={{ fontSize: '0.65rem', background: 'rgba(26, 115, 232, 0.1)', color: 'var(--primary)', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>HOST</span>
+                                                    )}
+                                                </div>
+                                                <div className="meta">
+                                                    <span><Clock size={14} /> {meeting.duration} min</span>
+                                                    <span className="copy-id" onClick={() => {
+                                                        navigator.clipboard.writeText(meeting.roomId);
+                                                        alert("Room ID copied!");
+                                                    }} title="Copy ID">
+                                                        <Video size={14} /> ID: {meeting.roomId}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <button
-                                        className="btn-secondary join-btn"
-                                        onClick={() => navigate(`/room/${meeting.roomId}`)}
-                                    >
-                                        Join Now
-                                    </button>
-                                </motion.div>
-                            ))
+                                        <div className="meeting-actions">
+                                            <button
+                                                className={isCreator ? "btn-primary" : "btn-secondary"}
+                                                onClick={() => navigate(`/room/${meeting.roomId}${isCreator ? '?host=true' : ''}`)}
+                                                style={{ padding: '8px 20px', fontSize: '0.875rem' }}
+                                            >
+                                                {isCreator ? "Start Meeting" : "Join Now"}
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })
                         ) : (
                             <div className="glass-card empty-state">
                                 <CalendarIcon size={48} opacity={0.3} />

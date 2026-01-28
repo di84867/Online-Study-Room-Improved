@@ -1,4 +1,4 @@
-const User = require('../models/User');
+const db = require('../db/localdb');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -8,13 +8,13 @@ exports.signup = async (req, res) => {
     try {
         const { email, password, displayName } = req.body;
 
-        const existingUser = await User.findOne({ email });
+        const existingUser = db.findUserByEmail(email);
         if (existingUser) {
             return res.status(400).json({ message: 'User already exists' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 12);
-        const user = new User({
+        const user = db.createUser({
             email,
             password: hashedPassword,
             displayName,
@@ -23,12 +23,12 @@ exports.signup = async (req, res) => {
             photoURL: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
         });
 
-        await user.save();
         const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
         res.status(201).json({
             token,
             user: {
+                _id: user._id,
                 email: user.email,
                 displayName: user.displayName,
                 photoURL: user.photoURL,
@@ -44,8 +44,10 @@ exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        const user = await User.findOne({ email, provider: 'local' });
-        if (!user) {
+        const user = db.findUserByEmail(email);
+        // Ensure provider is local if not specified, 
+        // but simple email check is usually fine or check user.provider
+        if (!user || user.provider !== 'local') {
             return res.status(404).json({ message: 'Account not found. Please create an account first.' });
         }
 
@@ -59,6 +61,7 @@ exports.login = async (req, res) => {
         res.json({
             token,
             user: {
+                _id: user._id,
                 email: user.email,
                 displayName: user.displayName,
                 photoURL: user.photoURL,
@@ -74,23 +77,20 @@ exports.socialAuth = async (req, res) => {
     try {
         const { email, displayName, photoURL, provider } = req.body;
 
-        let user = await User.findOne({ email });
+        let user = db.findUserByEmail(email);
 
         if (!user) {
-            // Create new user if doesn't exist (Google/Facebook requirement)
-            user = new User({
+            // Create new user if doesn't exist
+            user = db.createUser({
                 email,
                 displayName,
                 photoURL,
                 provider,
                 isAdmin: email.toLowerCase().includes('admin')
             });
-            await user.save();
         } else {
             // Update user info if they exist
-            user.displayName = displayName;
-            user.photoURL = photoURL;
-            await user.save();
+            user = db.updateUser(email, { displayName, photoURL });
         }
 
         const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
@@ -98,6 +98,7 @@ exports.socialAuth = async (req, res) => {
         res.json({
             token,
             user: {
+                _id: user._id,
                 email: user.email,
                 displayName: user.displayName,
                 photoURL: user.photoURL,

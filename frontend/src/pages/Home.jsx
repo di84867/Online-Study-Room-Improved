@@ -24,69 +24,76 @@ const Home = ({ user }) => {
     ];
 
     return (
-        <div className="dashboard-container">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="hero-section"
-                style={{ marginBottom: '3rem' }}
-            >
-                <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Welcome back, <span style={{ color: 'var(--primary)' }}>{user ? user.displayName : 'Scholar'}!</span></h1>
-                <p style={{ color: 'var(--text-muted)', maxWidth: '600px' }}>
-                    Connect with your study group instantly. {!user && "Sign in to schedule meetings and save your progress."}
-                </p>
-            </motion.div>
-
-            <div className="action-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
-                <motion.div whileHover={{ y: -5 }} className="glass-card" style={{ padding: '2rem' }}>
-                    <div style={{ background: 'rgba(99, 102, 241, 0.2)', width: '50px', height: '50px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
-                        <Plus color="#6366f1" size={24} />
-                    </div>
-                    <h3 style={{ marginBottom: '0.5rem' }}>New Meeting</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Start an instant local meeting and invite others to join.</p>
-                    <button onClick={createInstantMeeting} className="btn-primary" style={{ width: '100%' }}>Create Meeting</button>
-                </motion.div>
-
-                <motion.div whileHover={{ y: -5 }} className="glass-card" style={{ padding: '2rem' }}>
-                    <div style={{ background: 'rgba(6, 182, 212, 0.2)', width: '50px', height: '50px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
-                        <Play color="#06b6d4" size={24} />
-                    </div>
-                    <h3 style={{ marginBottom: '0.5rem' }}>Join Meeting</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Enter a room ID or link to join an existing study session.</p>
-                    <form onSubmit={joinMeeting} style={{ display: 'flex', gap: '10px' }}>
-                        <input
-                            type="text"
-                            placeholder="Room ID"
-                            value={roomName}
-                            onChange={(e) => setRoomName(e.target.value)}
-                            style={{ flex: 1, padding: '10px', borderRadius: '8px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', color: 'white' }}
-                        />
-                        <button type="submit" className="btn-secondary">Join</button>
-                    </form>
-                </motion.div>
-
-                <motion.div whileHover={{ y: -5 }} className="glass-card" style={{ padding: '2rem' }}>
-                    <div style={{ background: 'rgba(244, 114, 182, 0.2)', width: '50px', height: '50px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
-                        <Calendar color="#f472b6" size={24} />
-                    </div>
-                    <h3 style={{ marginBottom: '0.5rem' }}>Schedule</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Plan your study sessions and stay organized with your team.</p>
-                    <button onClick={() => navigate('/schedule')} className="btn-secondary" style={{ width: '100%', border: '1px solid var(--f472b6)' }}>Schedule Meeting</button>
-                </motion.div>
-            </div>
-
-            <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
-                {stats.map((stat, i) => (
-                    <div key={i} className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                        <div style={{ padding: '12px', borderRadius: '12px', backgroundColor: `${stat.color}15` }}>
-                            <stat.icon color={stat.color} size={28} />
+        <div className="dashboard-container" style={{ padding: '40px 60px', width: '100%' }}>
+            <div className="dashboard-layout" style={{ display: 'flex', gap: '60px', alignItems: 'center', minHeight: '80vh' }}>
+                
+                {/* Left side: Hero & Title */}
+                <div className="hero-content" style={{ flex: 1 }}>
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                    >
+                        <h1 style={{ fontSize: '3.5rem', fontWeight: 400, marginBottom: '1.5rem', lineHeight: 1.1 }}>
+                            Premium video meetings.<br/>
+                            <span style={{ color: 'var(--text-muted)' }}>Now free for everyone.</span>
+                        </h1>
+                        <p style={{ fontSize: '1.25rem', color: 'var(--text-muted)', marginBottom: '3rem', maxWidth: '440px' }}>
+                            We re-engineered the service we built for secure business meetings to make it free and available for all.
+                        </p>
+                        
+                        <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+                            <button onClick={createInstantMeeting} className="btn-primary" style={{ padding: '12px 24px', fontSize: '1rem', borderRadius: '4px' }}>
+                                <Plus size={20} /> New meeting
+                            </button>
+                            
+                            <form onSubmit={joinMeeting} style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--glass-border)', borderRadius: '4px', padding: '4px 8px', background: 'rgba(255,255,255,0.05)' }}>
+                                <Play size={20} style={{ margin: '0 8px', color: 'var(--text-muted)' }} />
+                                <input
+                                    type="text"
+                                    placeholder="Enter a code or link"
+                                    value={roomName}
+                                    onChange={(e) => setRoomName(e.target.value)}
+                                    style={{ background: 'none', border: 'none', padding: '8px', color: 'white', outline: 'none', width: '200px' }}
+                                />
+                                <button type="submit" disabled={!roomName} style={{ background: 'none', border: 'none', color: roomName ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 600, cursor: 'pointer', padding: '8px 16px' }}>
+                                    Join
+                                </button>
+                            </form>
                         </div>
-                        <div>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stat.value}</div>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{stat.label}</div>
+                        
+                        <hr style={{ border: 'none', borderTop: '1px solid var(--glass-border)', margin: '3rem 0' }} />
+                        
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--text-muted)' }}>
+                            <a href="#" style={{ color: 'var(--primary)', textDecoration: 'none' }}>Learn more</a> about OSR Meeting
                         </div>
-                    </div>
-                ))}
+                    </motion.div>
+                </div>
+
+                {/* Right side: Visuals/Stats */}
+                <div className="hero-visual" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="glass-card" 
+                        style={{ width: '400px', padding: '30px', textAlign: 'center', borderRadius: '24px', position: 'relative' }}
+                    >
+                        <div style={{ width: '80px', height: '80px', background: 'var(--primary)', borderRadius: '50%', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Video size={40} color="white" />
+                        </div>
+                        <h2 style={{ marginBottom: '10px' }}>Your study room is ready</h2>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '24px' }}>Stay connected with your crew and collaborate effectively with our shared whiteboard.</p>
+                        
+                        <div className="stats-mini" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            {stats.map((stat, i) => (
+                                <div key={i} style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '12px', textAlign: 'left' }}>
+                                    <stat.icon size={16} color={stat.color} style={{ marginBottom: '4px' }} />
+                                    <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>{stat.value}</div>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{stat.label}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                </div>
             </div>
         </div>
     );

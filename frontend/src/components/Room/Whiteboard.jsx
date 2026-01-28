@@ -94,7 +94,15 @@ const Whiteboard = ({ socket, roomId }) => {
     const colors = ['#ffffff', '#ff4757', '#2ed573', '#1e90ff', '#eccc68', '#ffa502', '#70a1ff', '#ced6e0'];
 
     return (
-        <div className="whiteboard-wrapper" style={{ width: '100%', height: '100%', position: 'relative', background: '#1e293b', borderRadius: '16px', overflow: 'hidden' }}>
+        <div className="whiteboard-wrapper" style={{ 
+            width: '100%', 
+            height: '100%', 
+            position: 'relative', 
+            background: '#ffffff', 
+            borderRadius: '8px', 
+            overflow: 'hidden',
+            boxShadow: 'inset 0 0 20px rgba(0,0,0,0.05)'
+        }}>
             <canvas
                 ref={canvasRef}
                 onMouseDown={startDrawing}
@@ -104,23 +112,71 @@ const Whiteboard = ({ socket, roomId }) => {
                 style={{ cursor: 'crosshair', display: 'block' }}
             />
             <div className="whiteboard-tools" style={{
-                position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)',
-                display: 'flex', gap: '10px', background: 'rgba(0,0,0,0.6)', padding: '10px',
-                borderRadius: '30px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)'
+                position: 'absolute', 
+                top: '20px', 
+                left: '20px',
+                display: 'flex', 
+                flexDirection: 'column',
+                gap: '12px', 
+                background: 'white', 
+                padding: '12px',
+                borderRadius: '8px', 
+                boxShadow: '0 1px 3px rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15)',
+                border: '1px solid #e8eaed'
             }}>
-                {colors.map(c => (
-                    <button
-                        key={c}
-                        onClick={() => setColor(c)}
-                        style={{
-                            width: '24px', height: '24px', borderRadius: '50%', background: c,
-                            border: color === c ? '2px solid white' : 'none', cursor: 'pointer'
-                        }}
-                    />
-                ))}
-                <div style={{ width: '1px', background: 'rgba(255,255,255,0.2)', margin: '0 5px' }}></div>
-                <button onClick={() => setColor('#1e293b')} className="tool-btn" style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>Eraser</button>
-                <button onClick={clear} className="tool-btn" style={{ background: 'none', border: 'none', color: '#ff4757', cursor: 'pointer' }}>Clear</button>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                    {colors.map(c => (
+                        <button
+                            key={c}
+                            onClick={() => setColor(c)}
+                            title={`Color: ${c}`}
+                            style={{
+                                width: '28px', 
+                                height: '28px', 
+                                borderRadius: '4px', 
+                                background: c,
+                                border: color === c ? '2px solid #1a73e8' : '1px solid #dadce0', 
+                                cursor: 'pointer',
+                                transition: 'transform 0.1s'
+                            }}
+                            onMouseOver={(e) => e.target.style.transform = 'scale(1.1)'}
+                            onMouseOut={(e) => e.target.style.transform = 'scale(1.0)'}
+                        />
+                    ))}
+                </div>
+                <div style={{ height: '1px', background: '#e8eaed' }}></div>
+                <button 
+                    onClick={() => setColor('#ffffff')} 
+                    className="tool-btn" 
+                    style={{ 
+                        background: color === '#ffffff' ? '#e8f0fe' : 'none', 
+                        border: 'none', 
+                        padding: '8px',
+                        borderRadius: '4px',
+                        color: color === '#ffffff' ? '#1a73e8' : '#5f6368', 
+                        cursor: 'pointer',
+                        fontSize: '0.8rem',
+                        fontWeight: 600
+                    }}
+                >
+                    Eraser
+                </button>
+                <button 
+                    onClick={clear} 
+                    className="tool-btn" 
+                    style={{ 
+                        background: 'none', 
+                        border: 'none', 
+                        padding: '8px',
+                        borderRadius: '4px',
+                        color: '#d93025', 
+                        cursor: 'pointer',
+                        fontSize: '0.8rem',
+                        fontWeight: 600
+                    }}
+                >
+                    Clear
+                </button>
             </div>
         </div>
     );

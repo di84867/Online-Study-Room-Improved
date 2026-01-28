@@ -16,7 +16,7 @@ navigator.mediaDevices.getUserMedia(mediaConstraints)
     })
 
 function uuidv4() {
-    return 'xxyxyxxyx'.replace(/[xy]/g, function (c) {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
@@ -40,7 +40,8 @@ createButton.addEventListener('click', (e) => {
         }
     }, 500);
 
-    location.href = `/room.html?room=${uuidv4()}`;
+    const roomCode = 'OSR' + Math.floor(1000 + Math.random() * 9000);
+    location.href = `/room.html?room=${roomCode}&host=true`;
 });
 
 joinBut.addEventListener('click', (e) => {

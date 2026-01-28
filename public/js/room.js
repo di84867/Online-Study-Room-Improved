@@ -1,6 +1,14 @@
 const socket = io();
 const myvideo = document.querySelector("#vd1");
 const roomid = params.get("room");
+const isAdmin = params.get("host") === "true";
+
+if (isAdmin) {
+    // Remove host param from URL so sharing doesn't grant admin
+    const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?room=' + roomid;
+    window.history.replaceState({path:newUrl},'',newUrl);
+}
+
 let username;
 const chatRoom = document.querySelector('.chat-cont');
 const sendButton = document.querySelector('.chat-send');
@@ -200,15 +208,27 @@ continueButt.addEventListener('click', () => {
     if (nameField.value == '') return;
     username = nameField.value;
     overlayContainer.style.visibility = 'hidden';
-    document.querySelector("#myname").innerHTML = `${username} (You)`;
-    socket.emit("join room", roomid, username);
-
+    document.querySelector("#myname").innerHTML = `${username} (You) ${isAdmin ? '(Host)' : ''}`;
+    socket.emit("join room", roomid, username, isAdmin);
 })
 
 nameField.addEventListener("keyup", function (event) {
     if (event.keyCode === 13) {
         event.preventDefault();
         continueButt.click();
+    }
+});
+
+socket.on('kicked', () => {
+    alert("You have been removed from the meeting by the host.");
+    location.href = '/';
+});
+
+socket.on('admin-action', (action) => {
+    if (action === 'mute') {
+        if (audioAllowed) {
+            audioButt.click();
+        }
     }
 });
 
@@ -323,6 +343,29 @@ function handleVideoOffer(offer, sid, cname, micinf, vidinf) {
             vidCont.appendChild(name);
             vidCont.appendChild(muteIcon);
             vidCont.appendChild(videoOff);
+
+            if (isAdmin) {
+                let adminControls = document.createElement('div');
+                adminControls.className = 'admin-controls';
+                
+                let muteButton = document.createElement('div');
+                muteButton.className = 'admin-btn tooltip';
+                muteButton.innerHTML = '<i class="fas fa-microphone-slash"></i><span class="tooltiptext">Mute User</span>';
+                muteButton.onclick = () => {
+                    if(confirm("Mute this user?")) socket.emit('restrict-user', sid, 'mute');
+                };
+                
+                let kickButton = document.createElement('div');
+                kickButton.className = 'admin-btn tooltip';
+                kickButton.innerHTML = '<i class="fas fa-user-times"></i><span class="tooltiptext">Kick User</span>';
+                kickButton.onclick = () => {
+                    if(confirm("Kick this user?")) socket.emit('ban-user', sid);
+                };
+                
+                adminControls.appendChild(muteButton);
+                adminControls.appendChild(kickButton);
+                vidCont.appendChild(adminControls);
+            }
 
             videoContainer.appendChild(vidCont);
 
@@ -521,6 +564,29 @@ socket.on('join room', async (conc, cnames, micinfo, videoinfo) => {
                     vidCont.appendChild(name);
                     vidCont.appendChild(muteIcon);
                     vidCont.appendChild(videoOff);
+
+                    if (isAdmin) {
+                        let adminControls = document.createElement('div');
+                        adminControls.className = 'admin-controls';
+                        
+                        let muteButton = document.createElement('div');
+                        muteButton.className = 'admin-btn tooltip';
+                        muteButton.innerHTML = '<i class="fas fa-microphone-slash"></i><span class="tooltiptext">Mute User</span>';
+                        muteButton.onclick = () => {
+                             if(confirm("Mute this user?")) socket.emit('restrict-user', sid, 'mute');
+                        };
+                        
+                        let kickButton = document.createElement('div');
+                        kickButton.className = 'admin-btn tooltip';
+                        kickButton.innerHTML = '<i class="fas fa-user-times"></i><span class="tooltiptext">Kick User</span>';
+                        kickButton.onclick = () => {
+                             if(confirm("Kick this user?")) socket.emit('ban-user', sid);
+                        };
+                        
+                        adminControls.appendChild(muteButton);
+                        adminControls.appendChild(kickButton);
+                        vidCont.appendChild(adminControls);
+                    }
 
                     videoContainer.appendChild(vidCont);
 

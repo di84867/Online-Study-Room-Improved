@@ -1,4 +1,5 @@
-const Meeting = require("../models/Meeting");
+const db = require('../db/localdb');
+const { v4: uuidv4 } = require('uuid');
 
 const createMeeting = async (req, res) => {
     try {
@@ -8,7 +9,7 @@ const createMeeting = async (req, res) => {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        const meeting = new Meeting({
+        const meeting = db.createMeeting({
             title,
             date: new Date(date),
             time,
@@ -17,7 +18,6 @@ const createMeeting = async (req, res) => {
             roomId
         });
 
-        await meeting.save();
         res.status(201).json(meeting);
     } catch (err) {
         console.error(err);
@@ -27,7 +27,7 @@ const createMeeting = async (req, res) => {
 
 const getMeetings = async (req, res) => {
     try {
-        const meetings = await Meeting.find().sort({ date: 1, time: 1 });
+        const meetings = db.getMeetings().sort((a, b) => new Date(a.date) - new Date(b.date));
         res.json(meetings);
     } catch (err) {
         console.error(err);
