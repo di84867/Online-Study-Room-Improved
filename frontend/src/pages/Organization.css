@@ -1,0 +1,154 @@
+.org-container {
+    padding: 40px 60px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.org-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 40px;
+}
+
+.org-badge {
+    background: rgba(26, 115, 232, 0.1);
+    color: var(--primary);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+}
+
+.org-tabs {
+    display: flex;
+    gap: 8px;
+    background: var(--surface);
+    padding: 4px;
+    border-radius: 10px;
+    width: fit-content;
+    margin-bottom: 32px;
+}
+
+.org-tabs button {
+    background: none;
+    border: none;
+    padding: 10px 24px;
+    color: var(--text-muted);
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: var(--transition);
+}
+
+.org-tabs button.active {
+    background: var(--surface-hover);
+    color: var(--primary);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.org-content-grid {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 32px;
+}
+
+.org-main-card {
+    padding: 32px;
+    min-height: 500px;
+}
+
+.org-sidebar-card {
+    padding: 24px;
+    height: fit-content;
+}
+
+.org-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    transition: var(--transition);
+}
+
+.org-item:hover {
+    background: rgba(255,255,255,0.04);
+}
+
+.item-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.item-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--surface-hover);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+}
+
+.mini-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.role-tag {
+    text-transform: capitalize;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.org-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.org-form input, .org-form select {
+    width: 100%;
+    padding: 12px;
+    background: var(--surface-hover);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    color: var(--text-main);
+    outline: none;
+}
+
+.delete-btn {
+    background: none;
+    border: none;
+    color: var(--error);
+    opacity: 0.3;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.delete-btn:hover {
+    opacity: 1;
+}
+
+.w-full { width: 100%; }

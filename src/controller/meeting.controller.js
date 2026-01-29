@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 
 const createMeeting = async (req, res) => {
     try {
-        const { title, date, time, duration, creator, roomId } = req.body;
+        const { title, date, time, creator, roomId, isClosed, courseId, classId } = req.body;
 
         if (!title || !date || !time || !creator || !roomId) {
             return res.status(400).json({ message: "All fields are required" });
@@ -13,9 +13,11 @@ const createMeeting = async (req, res) => {
             title,
             date: new Date(date),
             time,
-            duration,
             creator,
-            roomId
+            roomId,
+            isClosed,
+            courseId,
+            classId
         });
 
         res.status(201).json(meeting);
@@ -27,7 +29,14 @@ const createMeeting = async (req, res) => {
 
 const getMeetings = async (req, res) => {
     try {
-        const meetings = db.getMeetings().sort((a, b) => new Date(a.date) - new Date(b.date));
+        const { courseId } = req.query;
+        let meetings = db.getMeetings();
+        
+        if (courseId) {
+            meetings = meetings.filter(m => m.courseId === courseId);
+        }
+
+        meetings.sort((a, b) => new Date(a.date) - new Date(b.date));
         res.json(meetings);
     } catch (err) {
         console.error(err);
@@ -35,7 +44,39 @@ const getMeetings = async (req, res) => {
     }
 };
 
+const createCourse = (req, res) => {
+    try {
+        const course = db.createCourse(req.body);
+        res.status(201).json(course);
+    } catch (err) { res.status(500).json({ message: "Error" }); }
+};
+
+const getCourses = (req, res) => {
+    try {
+        const { orgId } = req.query;
+        res.json(db.getCoursesByOrg(orgId));
+    } catch (err) { res.status(500).json({ message: "Error" }); }
+};
+
+const createClass = (req, res) => {
+    try {
+        const cls = db.createClass(req.body);
+        res.status(201).json(cls);
+    } catch (err) { res.status(500).json({ message: "Error" }); }
+};
+
+const getClasses = (req, res) => {
+    try {
+        const { courseId } = req.query;
+        res.json(db.getClassesByCourse(courseId));
+    } catch (err) { res.status(500).json({ message: "Error" }); }
+};
+
 module.exports = {
     createMeeting,
-    getMeetings
+    getMeetings,
+    createCourse,
+    getCourses,
+    createClass,
+    getClasses
 };

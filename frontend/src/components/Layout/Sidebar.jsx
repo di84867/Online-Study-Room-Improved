@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Calendar, Settings, Video, User, Sun, Moon } from 'lucide-react';
+import { Home, Calendar, Settings, Video, User, Sun, Moon, Shield, Layers } from 'lucide-react';
 
-const Sidebar = ({ user }) => {
+const Sidebar = ({ user, openAuth }) => {
     const [isDark, setIsDark] = useState(true);
 
     const toggleTheme = () => {
@@ -12,21 +12,24 @@ const Sidebar = ({ user }) => {
 
     const menuItems = [
         { icon: Home, label: 'Dashboard', path: '/' },
-        { icon: Video, label: 'Meetings', path: '/meetings' },
         { icon: Calendar, label: 'Schedule', path: '/schedule' },
     ];
+
+    if (user?.role === 'owner') {
+        menuItems.push({ icon: Shield, label: 'Organization', path: '/organization' });
+    }
 
     return (
         <aside className="sidebar">
             <div className="logo-section" style={{ marginBottom: '40px', padding: '0 8px' }}>
                 <h2 style={{
                     color: 'var(--primary)',
-                    fontSize: '1.5rem',
-                    fontWeight: 500,
+                    fontSize: '1.4rem',
+                    fontWeight: 600,
                     margin: 0,
                     letterSpacing: '-0.5px'
                 }}>
-                    OSR Meeting
+                    Online Study Room
                 </h2>
             </div>
 
@@ -66,7 +69,15 @@ const Sidebar = ({ user }) => {
                 <span>{isDark ? 'Light' : 'Dark'}</span>
             </button>
 
-            <div className="sidebar-footer" style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '20px' }}>
+            <div 
+                className="sidebar-footer" 
+                onClick={!user ? openAuth : undefined}
+                style={{ 
+                    borderTop: '1px solid var(--glass-border)', 
+                    paddingTop: '20px',
+                    cursor: !user ? 'pointer' : 'default'
+                }}
+            >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     {user ? (
                         <img
@@ -81,10 +92,10 @@ const Sidebar = ({ user }) => {
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {user ? user.displayName : 'Guest User'}
+                            {user ? user.displayName : 'Sign In / Sign Up'}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            {user ? 'Online' : 'Not signed in'}
+                            {user ? 'Online' : 'Join the community'}
                         </div>
                     </div>
                 </div>

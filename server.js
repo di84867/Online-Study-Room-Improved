@@ -65,6 +65,9 @@ let socketPhoto = {}; // { socketId: photoURL }
 let roomAdmins = {}; // { roomid: [socketIds] }
 let activeRooms = new Set(); // Track successfully started rooms by admins
 let roomCanvas = {}; // { roomid: dataURL }
+let lobbyUsers = {}; // { roomid: [socketIds] }
+let roomRestricted = {}; // { roomid: boolean }
+let roomChatBlocked = {}; // { roomid: boolean }
 
 io.on("connect", (socket) => {
   socket.on("upload", (file, fileName, callback) => {
@@ -78,34 +81,60 @@ io.on("connect", (socket) => {
     }
   });
 
-  socket.on("join room", (roomid, name, isAdmin, photoURL) => {
+  socket.on("join room", (roomid, name, isAdmin, photoURL, isClosedMode) => {
+    // Determine if this user should be a host. 
+    // If the room is currently empty and it's NOT a restricted closed meeting, 
+    // the first joiner becomes the host automatically.
+    let amIAdmin = isAdmin;
+    if (!roomAdmins[roomid] || roomAdmins[roomid].length === 0) {
+        if (!isClosedMode) {
+            amIAdmin = true;
+            console.log(`Promoting first joiner ${name} to Host for room ${roomid}`);
+        }
+    }
+
+    // If meeting is closed OR restricted mode is ON, and user is NOT admin and room is not yet started, put them in lobby
+    const isRestricted = roomRestricted[roomid];
+    if ((isClosedMode || isRestricted) && !amIAdmin) {
+        if (!lobbyUsers[roomid]) lobbyUsers[roomid] = [];
+        if (!lobbyUsers[roomid].includes(socket.id)) {
+            lobbyUsers[roomid].push(socket.id);
+            socketroom[socket.id] = roomid;
+            socketname[socket.id] = name;
+            socketPhoto[socket.id] = photoURL;
+            
+            socket.emit("waiting-lobby");
+            
+            // Notify admins about the new lobby request
+            if (roomAdmins[roomid]) {
+                roomAdmins[roomid].forEach(adminSid => {
+                    io.to(adminSid).emit("lobby-request", { sid: socket.id, name, photoURL });
+                });
+            }
+            return;
+        }
+    }
+
     socket.join(roomid);
     socketroom[socket.id] = roomid;
     socketname[socket.id] = name;
     socketPhoto[socket.id] = photoURL;
 
-    console.log(`User ${name} (${socket.id}) joined room ${roomid}`);
-
-    if (isAdmin) {
+    if (amIAdmin) {
       if (!roomAdmins[roomid]) roomAdmins[roomid] = [];
       if (!roomAdmins[roomid].includes(socket.id)) {
         roomAdmins[roomid].push(socket.id);
       }
       activeRooms.add(roomid);
-      io.to(roomid).emit("room-started"); // Notify waiters
+      io.to(roomid).emit("room-started"); // Notify anyone waiting
     }
 
     // Notify others
-    // new args: photos is 7th argument
-    socket
-      .to(roomid)
-      .emit("join room", [socket.id], { [socket.id]: name }, {}, {}, isAdmin, undefined, { [socket.id]: photoURL });
+    socket.to(roomid).emit("join room", [socket.id], { [socket.id]: name }, {}, {}, isAdmin, undefined, { [socket.id]: photoURL });
 
     // Send users list to the new joiner.
     const clients = io.sockets.adapter.rooms.get(roomid);
-    const usersInRoom = clients
-      ? Array.from(clients).filter((id) => id !== socket.id)
-      : [];
+    const usersInRoom = clients ? Array.from(clients).filter((id) => id !== socket.id) : [];
     const names = {};
     const photos = {};
     usersInRoom.forEach((id) => {
@@ -114,30 +143,65 @@ io.on("connect", (socket) => {
     });
 
     const isActive = activeRooms.has(roomid);
-    const amIAdmin = roomAdmins[roomid] && roomAdmins[roomid].includes(socket.id);
-    // Signature: (users, names, mics, videos, isAdmin, isActive, photos)
     socket.emit("join room", usersInRoom, names, {}, {}, amIAdmin, isActive, photos);
   });
 
-  socket.on("message", (msg, roomid, href) => {
-    const senderName = socketname[socket.id] || "Guest";
-    const isAdmin =
-      roomAdmins[roomid] && roomAdmins[roomid].includes(socket.id);
-    io.to(roomid).emit(
-      "message",
-      msg,
-      senderName,
-      moment().format("h:mm a"),
-      href,
-      socket.id,
-      isAdmin,
-    );
+  socket.on("approve-admission", (targetSid) => {
+      const roomid = socketroom[socket.id];
+      if (roomAdmins[roomid] && roomAdmins[roomid].includes(socket.id)) {
+          // Remove from lobby
+          if (lobbyUsers[roomid]) {
+              lobbyUsers[roomid] = lobbyUsers[roomid].filter(sid => sid !== targetSid);
+          }
+          io.to(targetSid).emit("admitted");
+      }
   });
 
-  // Admin File Permission Logic
+  socket.on("reject-admission", (targetSid) => {
+      const roomid = socketroom[socket.id];
+      if (roomAdmins[roomid] && roomAdmins[roomid].includes(socket.id)) {
+          if (lobbyUsers[roomid]) {
+              lobbyUsers[roomid] = lobbyUsers[roomid].filter(sid => sid !== targetSid);
+          }
+          io.to(targetSid).emit("kicked");
+      }
+  });
+
+  socket.on("message", (msg, roomid, href) => {
+    if (roomChatBlocked[roomid] && !roomAdmins[roomid].includes(socket.id)) return;
+
+    const senderName = socketname[socket.id] || "Guest";
+    const isAdmin = roomAdmins[roomid] && roomAdmins[roomid].includes(socket.id);
+    io.to(roomid).emit("message", msg, senderName, moment().format("h:mm a"), href, socket.id, isAdmin);
+  });
+
+  socket.on("toggle-chat", (isBlocked) => {
+      const roomid = socketroom[socket.id];
+      if (roomAdmins[roomid] && roomAdmins[roomid].includes(socket.id)) {
+          roomChatBlocked[roomid] = isBlocked;
+          io.to(roomid).emit("chat-status", isBlocked);
+      }
+  });
+
+  socket.on("mute-all", () => {
+      const roomid = socketroom[socket.id];
+      if (roomAdmins[roomid] && roomAdmins[roomid].includes(socket.id)) {
+          socket.to(roomid).emit("admin-action", "mute");
+      }
+  });
+
+  socket.on("reaction", (emoji) => {
+      const roomid = socketroom[socket.id];
+      if (roomid) io.to(roomid).emit("reaction", { sid: socket.id, emoji });
+  });
+
+  socket.on("raise-hand", (isRaised) => {
+      const roomid = socketroom[socket.id];
+      if (roomid) io.to(roomid).emit("hand-status", { sid: socket.id, isRaised });
+  });
+
   socket.on("file-request", (fileName, displayName, href) => {
     const roomid = socketroom[socket.id];
-    // Send request to room admins
     if (roomAdmins[roomid]) {
       roomAdmins[roomid].forEach((adminSid) => {
         io.to(adminSid).emit("file-permission-request", {
@@ -153,15 +217,7 @@ io.on("connect", (socket) => {
   socket.on("approve-file", (requestId, fileName, href) => {
     const roomid = socketroom[socket.id];
     const senderName = socketname[requestId] || "Guest";
-    // Broadcast to everyone now that admin approved
-    io.to(roomid).emit(
-      "message",
-      fileName,
-      senderName,
-      moment().format("h:mm a"),
-      href,
-      requestId,
-    );
+    io.to(roomid).emit("message", fileName, senderName, moment().format("h:mm a"), href, requestId);
   });
 
   // Admin Controls
@@ -174,25 +230,25 @@ io.on("connect", (socket) => {
 
   socket.on("ban-user", (targetSid) => {
     const roomid = socketroom[socket.id];
-    // Verify kicker is admin
     if (roomAdmins[roomid] && roomAdmins[roomid].includes(socket.id)) {
       io.to(targetSid).emit("kicked");
-      // Also tell others to remove this peer
       io.to(roomid).emit("remove peer", targetSid);
-
-      // Force disconnect socket
       const targetSocket = io.sockets.sockets.get(targetSid);
-      if (targetSocket) {
-        targetSocket.leave(roomid);
-      }
+      if (targetSocket) targetSocket.leave(roomid);
     }
   });
 
   socket.on("restrict-user", (targetSid, action) => {
-    // action can be 'mute' or 'remove-video'
     const roomid = socketroom[socket.id];
     if (roomAdmins[roomid] && roomAdmins[roomid].includes(socket.id)) {
       io.to(targetSid).emit("admin-action", action);
+    }
+  });
+
+  socket.on("promote-coadmin", (targetSid) => {
+    const roomid = socketroom[socket.id];
+    if (roomAdmins[roomid] && roomAdmins[roomid].includes(socket.id)) {
+      io.to(roomid).emit("coadmin-promoted", targetSid);
     }
   });
 
@@ -202,29 +258,12 @@ io.on("connect", (socket) => {
     const time = moment().format("h:mm a");
     const senderId = socket.id;
 
-    io.to(targetSid).emit(
-      "private message",
-      msg,
-      senderName,
-      time,
-      senderId,
-      targetSid,
-      false,
-      href
-    );
+    io.to(targetSid).emit("private message", msg, senderName, time, senderId, targetSid, false, href);
 
     if (roomAdmins[roomid]) {
       roomAdmins[roomid].forEach((adminSid) => {
         if (adminSid !== senderId && adminSid !== targetSid) {
-          io.to(adminSid).emit(
-            "private message",
-            `[Private ${senderName}->${socketname[targetSid]}]: ${msg}`,
-            senderName,
-            time,
-            senderId,
-            targetSid,
-            true,
-          );
+          io.to(adminSid).emit("private message", `[Private ${senderName}->${socketname[targetSid]}]: ${msg}`, senderName, time, senderId, targetSid, true);
         }
       });
     }
@@ -244,7 +283,12 @@ io.on("connect", (socket) => {
 
   socket.on("speaking", (speaking) => {
     const roomid = socketroom[socket.id];
-    if (roomid) socket.to(roomid).emit("speaking", socket.id, speaking);
+    if (roomid) io.to(roomid).emit("speaking", socket.id, speaking);
+  });
+
+  socket.on("sharing", (isSharing) => {
+    const roomid = socketroom[socket.id];
+    if (roomid) io.to(roomid).emit("sharing", socket.id, isSharing);
   });
 
   socket.on("draw", (nx, ny, px, py, color, size) => {
@@ -272,6 +316,14 @@ io.on("connect", (socket) => {
     }
   });
 
+  socket.on("update-settings", (settings) => {
+    const roomid = socketroom[socket.id];
+    if (roomAdmins[roomid] && roomAdmins[roomid].includes(socket.id)) {
+        if (settings.restricted !== undefined) roomRestricted[roomid] = settings.restricted;
+        io.to(roomid).emit("admin-settings-update", settings);
+    }
+  });
+
   socket.on("action", (type, roomid, extra) => {
     socket.to(roomid).emit("action", type, socket.id, extra);
   });
@@ -279,13 +331,14 @@ io.on("connect", (socket) => {
   socket.on("disconnect", () => {
     const roomid = socketroom[socket.id];
     if (roomid && roomAdmins[roomid]) {
-      // If an admin disconnects, we might want to assign a new admin or just leave it.
-      // For now, allow multiple admins or just remove the disconnected one.
       roomAdmins[roomid] = roomAdmins[roomid].filter((id) => id !== socket.id);
     }
     socket.to(roomid).emit("remove peer", socket.id);
     delete socketroom[socket.id];
     delete socketname[socket.id];
+    if (roomid && lobbyUsers[roomid]) {
+        lobbyUsers[roomid] = lobbyUsers[roomid].filter(sid => sid !== socket.id);
+    }
   });
 });
 

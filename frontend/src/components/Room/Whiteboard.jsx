@@ -91,7 +91,8 @@ const Whiteboard = ({ socket, roomId }) => {
         if (socket) socket.emit('clearBoard');
     };
 
-    const colors = ['#ffffff', '#ff4757', '#2ed573', '#1e90ff', '#eccc68', '#ffa502', '#70a1ff', '#ced6e0'];
+    const colors = ['#000000', '#ffffff', '#ff4757', '#2ed573', '#1e90ff', '#eccc68', '#ffa502', '#70a1ff', '#5f6368', '#a4b0be', '#f6b93b', '#e55039'];
+    const sizes = [2, 4, 8, 12, 20];
 
     return (
         <div className="whiteboard-wrapper" style={{ 
@@ -109,7 +110,10 @@ const Whiteboard = ({ socket, roomId }) => {
                 onMouseMove={draw}
                 onMouseUp={stopDrawing}
                 onMouseOut={stopDrawing}
-                style={{ cursor: 'crosshair', display: 'block' }}
+                style={{ 
+                    cursor: `url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgdmlld0JveD0iMCAwIDEwIDEwIj48Y2lyY2xlIGN4PSI1IiBjeT0iNSIgcj0iNCIgZmlsbD0icmdiYSgwLDAsMCwwLjUpIi8+PC9zdmc+") 5 5, auto`, 
+                    display: 'block' 
+                }}
             />
             <div className="whiteboard-tools" style={{
                 position: 'absolute', 
@@ -117,65 +121,54 @@ const Whiteboard = ({ socket, roomId }) => {
                 left: '20px',
                 display: 'flex', 
                 flexDirection: 'column',
-                gap: '12px', 
-                background: 'white', 
-                padding: '12px',
-                borderRadius: '8px', 
-                boxShadow: '0 1px 3px rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15)',
-                border: '1px solid #e8eaed'
+                gap: '16px', 
+                background: 'rgba(255, 255, 255, 0.9)', 
+                backdropFilter: 'blur(10px)',
+                padding: '16px',
+                borderRadius: '16px', 
+                boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                border: '1px solid rgba(0,0,0,0.05)',
+                width: '140px'
             }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
                     {colors.map(c => (
                         <button
                             key={c}
                             onClick={() => setColor(c)}
-                            title={`Color: ${c}`}
                             style={{
-                                width: '28px', 
-                                height: '28px', 
-                                borderRadius: '4px', 
+                                width: '24px', 
+                                height: '24px', 
+                                borderRadius: '50%', 
                                 background: c,
-                                border: color === c ? '2px solid #1a73e8' : '1px solid #dadce0', 
-                                cursor: 'pointer',
-                                transition: 'transform 0.1s'
+                                border: color === c ? '2px solid #1a73e8' : '1px solid #ddd', 
+                                cursor: 'pointer'
                             }}
-                            onMouseOver={(e) => e.target.style.transform = 'scale(1.1)'}
-                            onMouseOut={(e) => e.target.style.transform = 'scale(1.0)'}
                         />
                     ))}
                 </div>
-                <div style={{ height: '1px', background: '#e8eaed' }}></div>
-                <button 
-                    onClick={() => setColor('#ffffff')} 
-                    className="tool-btn" 
-                    style={{ 
-                        background: color === '#ffffff' ? '#e8f0fe' : 'none', 
-                        border: 'none', 
-                        padding: '8px',
-                        borderRadius: '4px',
-                        color: color === '#ffffff' ? '#1a73e8' : '#5f6368', 
-                        cursor: 'pointer',
-                        fontSize: '0.8rem',
-                        fontWeight: 600
-                    }}
-                >
+                
+                <div style={{ height: '1px', background: '#eee' }}></div>
+
+                <div className="size-selector" style={{ display: 'flex', gap: '4px', justifyContent: 'space-between' }}>
+                    {sizes.map(s => (
+                        <button key={s} onClick={() => setSize(s)}
+                                style={{
+                                    width: '20px', height: '20px', borderRadius: '50%', border: size === s ? '2px solid #1a73e8' : '1px solid #ddd',
+                                    background: size === s ? '#e8f0fe' : '#fff', cursor: 'pointer', fontSize: '10px'
+                                }}>
+                            {s}
+                        </button>
+                    ))}
+                </div>
+
+                <button onClick={() => setColor('white')} 
+                        style={{ background: color === 'white' ? '#e8f0fe' : '#f8f9fa', border: 'none', padding: '10px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, color: '#5f6368' }}>
                     Eraser
                 </button>
-                <button 
-                    onClick={clear} 
-                    className="tool-btn" 
-                    style={{ 
-                        background: 'none', 
-                        border: 'none', 
-                        padding: '8px',
-                        borderRadius: '4px',
-                        color: '#d93025', 
-                        cursor: 'pointer',
-                        fontSize: '0.8rem',
-                        fontWeight: 600
-                    }}
-                >
-                    Clear
+
+                <button onClick={clear} 
+                        style={{ background: '#fee2e2', border: 'none', padding: '10px', borderRadius: '8px', cursor: 'pointer', color: '#d93025', fontWeight: 600 }}>
+                    Clear All
                 </button>
             </div>
         </div>

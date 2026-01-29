@@ -5,10 +5,17 @@ import Room from './pages/Room';
 import Schedule from './pages/Schedule';
 import Sidebar from './components/Layout/Sidebar';
 import TopBar from './components/Layout/TopBar';
+import AuthModal from './components/Auth/AuthModal';
+import Organization from './pages/Organization';
+import Profile from './pages/Profile';
+import { useLocation } from 'react-router-dom';
 import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const location = useLocation();
+  const isMeetingRoom = location.pathname.startsWith('/room/');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -29,22 +36,27 @@ function App() {
   };
 
   return (
-    <Router>
-      <div className="app-container">
-        <Sidebar user={user} />
-        <main className="main-content">
-          <TopBar user={user} setUser={handleSetUser} />
-          <div className="page-wrapper">
+    <div className={`app-container ${isMeetingRoom ? 'meeting-mode' : ''}`}>
+      <main className="main-content" style={{ width: '100%' }}>
+        {!isMeetingRoom && <TopBar user={user} setUser={handleSetUser} openAuth={() => setIsAuthOpen(true)} />}
+        <div className="page-wrapper">
             <Routes>
               <Route path="/" element={<Home user={user} />} />
               <Route path="/room/:roomId" element={<Room user={user} />} />
               <Route path="/schedule" element={<Schedule user={user} />} />
+              <Route path="/profile" element={<Profile user={user} setUser={handleSetUser} />} />
+              {user?.role === 'owner' && <Route path="/organization" element={<Organization user={user} />} />}
             </Routes>
           </div>
         </main>
+        
+        <AuthModal 
+          isOpen={isAuthOpen} 
+          onClose={() => setIsAuthOpen(false)} 
+          onLogin={handleSetUser} 
+        />
       </div>
-    </Router>
-  );
+    );
 }
 
 export default App;

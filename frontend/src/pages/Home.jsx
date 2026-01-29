@@ -9,7 +9,7 @@ const Home = ({ user }) => {
 
     const createInstantMeeting = () => {
         const id = Math.random().toString(36).substring(2, 9);
-        navigate(`/room/${id}`);
+        navigate(`/room/${id}?host=true`);
     };
 
     const joinMeeting = (e) => {
@@ -38,7 +38,7 @@ const Home = ({ user }) => {
                             <span style={{ color: 'var(--text-muted)' }}>Now free for everyone.</span>
                         </h1>
                         <p style={{ fontSize: '1.25rem', color: 'var(--text-muted)', marginBottom: '3rem', maxWidth: '440px' }}>
-                            We re-engineered the service we built for secure business meetings to make it free and available for all.
+                            A dedicated space for students and educators to collaborate, study, and grow together with advanced academic tools.
                         </p>
                         
                         <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
@@ -61,11 +61,6 @@ const Home = ({ user }) => {
                             </form>
                         </div>
                         
-                        <hr style={{ border: 'none', borderTop: '1px solid var(--glass-border)', margin: '3rem 0' }} />
-                        
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--text-muted)' }}>
-                            <a href="#" style={{ color: 'var(--primary)', textDecoration: 'none' }}>Learn more</a> about OSR Meeting
-                        </div>
                     </motion.div>
                 </div>
 
@@ -83,15 +78,17 @@ const Home = ({ user }) => {
                         <h2 style={{ marginBottom: '10px' }}>Your study room is ready</h2>
                         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '24px' }}>Stay connected with your crew and collaborate effectively with our shared whiteboard.</p>
                         
-                        <div className="stats-mini" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                            {stats.map((stat, i) => (
-                                <div key={i} style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '12px', textAlign: 'left' }}>
-                                    <stat.icon size={16} color={stat.color} style={{ marginBottom: '4px' }} />
-                                    <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>{stat.value}</div>
-                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{stat.label}</div>
-                                </div>
-                            ))}
-                        </div>
+                        {user && (
+                            <div className="stats-mini" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                {stats.map((stat, i) => (
+                                    <div key={i} style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '12px', textAlign: 'left' }}>
+                                        <stat.icon size={16} color={stat.color} style={{ marginBottom: '4px' }} />
+                                        <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>{stat.value}</div>
+                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{stat.label}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </motion.div>
                 </div>
             </div>
