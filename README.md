@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # StudyRoom+
 
 A real-time video conferencing and collaboration platform for online study sessions.
@@ -34,3 +35,6 @@ A real-time video conferencing and collaboration platform for online study sessi
 - **Real-time Chat**: Integrated chat within the meeting rooms.
 - **Social Auth**: Support for Google and Facebook login.
   > > > > > > > 222a8e93b0d3dfad59d8c2a96c624d46a7236aed
+=======
+# Online-Study-Room-Improved
+>>>>>>> 4ddf83299581ea01d67b28834003b9cf121caa3d
