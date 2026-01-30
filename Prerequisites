@@ -1,0 +1,4 @@
+Install latest Node.JS
+Install npm using command npm install in cmd of vscode 
+Install socket.io lib using command npm install socket.io
+Type node server.js after npm is successfully installed
